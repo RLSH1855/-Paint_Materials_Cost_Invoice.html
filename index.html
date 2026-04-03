@@ -769,7 +769,7 @@
                 </button>
             </div>
             <div class="sidebar-actions">
-                <button class="btn btn-print-glow" onclick="window.print(); this.blur();">
+                <button class="btn btn-print-glow" onclick="_playClickSound(); this.blur(); setTimeout(function(){ window.print(); }, 80);">
                     🖨&nbsp; Print / Save PDF
                 </button>
                 <button class="btn btn-wipe" onclick="clearForm(); this.blur();">
@@ -1485,15 +1485,27 @@ function formatAllowance(el) {
     calcNetDue();
 }
 
-/* ── Sidebar click sound ── */
-var _clickAudio = new Audio('smooth_mouse button_click sound.mp3');
-_clickAudio.volume = 0.5;
+/* ── Sidebar click sound (Web Audio API — no file needed) ── */
+function _playClickSound() {
+    try {
+        var ctx = new (window.AudioContext || window.webkitAudioContext)();
+        var osc  = ctx.createOscillator();
+        var gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(900, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(120, ctx.currentTime + 0.055);
+        gain.gain.setValueAtTime(0.35, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.06);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.06);
+    } catch(e) {}
+}
 document.querySelector('.sidebar').addEventListener('click', function(e) {
     var el = e.target;
     if (el.closest('button') || el.closest('label') || el.tagName === 'INPUT' || el.tagName === 'SELECT') {
-        var s = _clickAudio.cloneNode();
-        s.volume = 0.5;
-        s.play().catch(function(){});
+        _playClickSound();
     }
 });
 
