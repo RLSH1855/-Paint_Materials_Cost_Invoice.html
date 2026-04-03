@@ -1,0 +1,1278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>3J's Auto Body — Paint & Material Cap Calculator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700;800&family=Montserrat:wght@700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; font-family: 'Open Sans', sans-serif; }
+        :root {
+            --primary:      #2C3E50;
+            --primary-dark: #1a252f;
+            --accent:       #D4A017;
+            --row-alt:      #f5f7f9;
+        }
+
+        body {
+            background: #d8d8d8;
+            font-size: 11px;
+            font-weight: 400;
+            letter-spacing: 0.5px;
+            margin: 0; padding: 0;
+            color: #222;
+        }
+
+        /* ── LAYOUT ── */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 265px 1fr;
+            min-height: 100vh;
+        }
+
+        /* ══════════════════════════════════════
+           SIDEBAR
+        ══════════════════════════════════════ */
+        .sidebar {
+            background: var(--primary);
+            color: white;
+            height: 100vh;
+            position: sticky;
+            top: 0;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid var(--primary-dark);
+        }
+
+        .sidebar-inner {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px 10px 10px 10px;
+        }
+
+        .sidebar h6 {
+            font-size: 9px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #7f9ab0;
+            border-bottom: 1px solid #34495e;
+            padding-bottom: 7px;
+            margin-bottom: 12px;
+        }
+
+        /* ── Mode Toggle ── */
+        .mode-toggle-wrap {
+            display: flex;
+            border-radius: 4px;
+            overflow: hidden;
+            border: 1px solid #4a6a85;
+            margin-bottom: 14px;
+        }
+        .mode-btn {
+            flex: 1;
+            padding: 8px 4px;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            background: #3E5871;
+            color: #7f9ab0;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .mode-btn.active-markup   { background: #27AE60; color: #fff; }
+        .mode-btn.active-markdown { background: #C0392B; color: #fff; }
+
+        /* ── Input fields ── */
+        .sb-field { margin-bottom: 12px; }
+        .sb-label {
+            font-size: 8.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: #7f9ab0;
+            margin-bottom: 4px;
+            display: block;
+        }
+        .sb-input {
+            width: 100%;
+            background: #3E5871;
+            color: #fff;
+            border: 1px solid #4a6a85;
+            border-radius: 4px;
+            padding: 8px 10px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            transition: border-color 0.2s;
+        }
+        .sb-input:focus { outline: none; border-color: #7f9ab0; }
+        .sb-input::placeholder { color: #4a6a85; font-weight: 400; }
+
+        /* ── Mode label ── */
+        #modeLabelText {
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: #7f9ab0;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        /* ── Action buttons ── */
+        .sidebar-actions { margin-bottom: 14px; }
+        .sidebar-actions .btn {
+            width: 100%;
+            display: block;
+            margin: 0 0 7px 0;
+            padding: 9px 10px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .sidebar-actions .btn:hover { filter: brightness(1.1); box-shadow: inset 0 2px 6px rgba(0,0,0,0.3); }
+        .btn-save  { background: var(--accent); color: #1a252f; }
+        .btn-print { background: #2980b9; color: #fff; }
+        .btn-clear { background: #8B0000; color: #fff; }
+        .btn-import { background: #27AE60; color: #fff; }
+
+        /* ── Records list ── */
+        .search-box {
+            background: #ecf0f1;
+            border: 1px solid #bdc3c7;
+            color: #000;
+            font-size: 11px;
+            padding: 7px 8px;
+            width: 100%;
+            border-radius: 4px;
+            margin-bottom: 5px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+        .record-count {
+            font-size: 9px;
+            color: #aaa;
+            text-align: right;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+        }
+        .history-item {
+            background: #3E5871;
+            border-radius: 3px;
+            padding: 7px 10px;
+            margin-bottom: 5px;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s ease;
+            border-left: 3px solid transparent;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .history-item:hover { background: #4a6680; border-left-color: #2ecc71; }
+        .history-item .rec-ro   { font-weight: 800; font-size: 10px; color: #fff; letter-spacing: 0.5px; padding-right: 52px; }
+        .history-item .rec-name { font-size: 9px; color: #b0c4d8; letter-spacing: 0.5px; }
+        .history-item .rec-date { font-size: 8px; color: #7f9ab0; margin-top: 1px; letter-spacing: 0.5px; }
+        .del-btn {
+            position: absolute; top: 50%; right: 8px;
+            transform: translateY(-50%);
+            background: #c0392b; border: none; border-radius: 3px;
+            color: white; width: 40px; height: 22px;
+            font-size: 9px; font-weight: 700; letter-spacing: 0.3px;
+            text-transform: uppercase; cursor: pointer;
+        }
+        .del-btn:hover { background: #e74c3c; }
+
+        .sidebar-footer {
+            border-top: 1px solid #34495e;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        .sidebar-footer button {
+            background: none; border: none;
+            color: #7f9ab0; font-size: 9px; font-weight: 600;
+            letter-spacing: 0.5px; text-transform: uppercase;
+            cursor: pointer; padding: 2px 4px; transition: color 0.2s;
+        }
+        .sidebar-footer button:hover { color: #fff; }
+
+        /* ══════════════════════════════════════
+           TOAST
+        ══════════════════════════════════════ */
+        #toast {
+            position: fixed; bottom: 24px; left: 50%;
+            transform: translateX(-50%);
+            background: var(--primary); color: white;
+            padding: 9px 22px; border-radius: 4px;
+            font-size: 11px; font-weight: 600;
+            letter-spacing: 0.8px; z-index: 9999;
+            display: none; box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+        }
+
+        /* ══════════════════════════════════════
+           CONTENT WRAP
+        ══════════════════════════════════════ */
+        .content-wrap {
+            padding: 22px 20px;
+            background: #d8d8d8;
+        }
+
+        .ws-card {
+            background: white;
+            max-width: 960px;
+            margin: 0 auto;
+            box-shadow: 0 6px 24px rgba(0,0,0,0.18);
+        }
+
+        /* ── INVOICE HEADER ── */
+        .invoice-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 24px 32px 18px 32px;
+            border-bottom: 3px solid var(--primary);
+        }
+
+        .logo-area img {
+            max-height: 72px;
+            width: auto;
+            display: block;
+            object-fit: contain;
+            align-self: flex-start;
+        }
+        .logo-area .tagline {
+            font-size: 8.5px;
+            font-weight: 800;
+            color: #333;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            margin-top: 5px;
+        }
+        .logo-area .addr-block {
+            font-size: 9.5px;
+            font-weight: 600;
+            color: #444;
+            line-height: 1.9;
+            margin-top: 6px;
+        }
+
+        .title-area { text-align: right; }
+        .inv-title {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 36px;
+            font-weight: 800;
+            color: var(--primary);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            line-height: 1;
+        }
+        .inv-subtitle {
+            font-size: 10px;
+            font-weight: 700;
+            color: #777;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-top: 4px;
+        }
+        .inv-number-row {
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+        .inv-number-label {
+            font-size: 9px; font-weight: 800; text-transform: uppercase;
+            letter-spacing: 0.8px; color: #777;
+        }
+        .inv-number-val {
+            font-size: 13px; font-weight: 800;
+            color: var(--primary); letter-spacing: 1px;
+            min-width: 80px; text-align: right;
+        }
+
+        /* ── GOLD BAR ── */
+        .gold-bar { background: var(--accent); height: 6px; }
+
+        /* ── INFO BLOCK ── */
+        .info-block {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px 28px;
+            padding: 18px 32px;
+        }
+        .info-field { display: flex; flex-direction: column; gap: 3px; }
+        .info-field.span2 { grid-column: span 2; }
+        .info-field label {
+            font-size: 8px; font-weight: 800;
+            text-transform: uppercase; letter-spacing: 0.8px;
+            color: var(--primary);
+        }
+        .info-input {
+            border: none; border-bottom: 1.5px solid var(--primary);
+            padding: 3px 2px; font-size: 11px; font-weight: 600;
+            color: #222; letter-spacing: 0.5px; width: 100%;
+            background: transparent;
+            text-transform: capitalize;
+        }
+        .info-input:focus { outline: none; border-bottom-color: var(--accent); }
+
+        /* ── SECTION BAR ── */
+        .section-bar {
+            background: transparent;
+            padding: 10px 32px 4px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+        .section-bar-title {
+            font-size: 14px; font-weight: 800;
+            text-transform: uppercase; letter-spacing: 2px;
+            color: var(--primary);
+            text-align: center;
+        }
+        .section-bar-sub {
+            font-size: 8.5px; font-weight: 600;
+            color: rgba(255,255,255,0.55); letter-spacing: 0.5px;
+        }
+
+        /* ── GROUP HEADER inside table ── */
+        .mat-table tbody tr.group-header td {
+            background: #fff !important;
+            box-shadow: inset 5px 0 0 var(--accent);
+            color: var(--primary);
+            font-size: 11.5px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 2.5px;
+            padding: 11px 10px 11px 30px;
+            border-top: 1px solid #dde3ea;
+            border-bottom: 1px solid #dde3ea;
+        }
+
+        /* ── TABLE ── */
+        .mat-table-wrap { padding: 0; }
+        .mat-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .mat-table thead tr {
+            background: var(--primary);
+        }
+        .mat-table thead th {
+            color: #F0C040;
+            font-size: 8.5px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            padding: 9px 10px;
+            text-align: left;
+            white-space: nowrap;
+        }
+        .mat-table thead th.right { text-align: right; }
+
+        .mat-table tbody tr { border-bottom: 1px solid #e8ecf0; }
+        .mat-table tbody tr:nth-child(even) { background: var(--row-alt); }
+        .mat-table tbody tr:hover { background: #eef3f8; }
+        .mat-table tbody tr.disabled { opacity: 0.38; }
+
+        .mat-table td {
+            padding: 7px 10px;
+            font-size: 10.5px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            vertical-align: middle;
+        }
+        .mat-table td.right { text-align: right; }
+        .mat-table td.center { text-align: center; }
+
+        .td-cb input[type=checkbox] { cursor: pointer; width: 14px; height: 14px; accent-color: var(--primary); }
+        .td-g  { color: #888; font-size: 9.5px; font-weight: 600; }
+        .td-amt { font-weight: 800; color: var(--primary); }
+
+        /* ── TOTALS ── */
+        .totals-block {
+            padding: 18px 32px 22px 32px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 0;
+        }
+        .total-row {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 20px;
+            padding: 5px 0;
+            width: 320px;
+        }
+        .total-row + .total-row { border-top: 1px solid #e0e0e0; }
+        .total-label {
+            font-size: 9.5px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.8px;
+            color: #555; flex: 1; text-align: right;
+        }
+        .total-val {
+            font-size: 12px; font-weight: 800;
+            color: var(--primary); width: 100px;
+            text-align: right; letter-spacing: 0.5px;
+        }
+        .total-row.net-due {
+            background: var(--primary);
+            border-radius: 3px;
+            padding: 8px 12px;
+            margin-top: 4px;
+            width: 340px;
+        }
+        .total-row.net-due .total-label { color: #F0C040; font-size: 10px; letter-spacing: 2px; }
+        .total-row.net-due .total-val   { color: #fff; font-size: 14px; letter-spacing: 2px; }
+
+        /* ── NOTES ── */
+        .notes-wrap { padding: 0 32px 20px 32px; }
+        .notes-label {
+            font-size: 8px; font-weight: 800;
+            text-transform: uppercase; letter-spacing: 0.8px;
+            color: var(--primary); margin-bottom: 6px;
+        }
+        .notes-input {
+            width: 100%; border: 1.5px solid #ccc;
+            border-radius: 3px; padding: 8px 10px;
+            font-size: 10.5px; font-weight: 500;
+            color: #333; letter-spacing: 0.5px;
+            resize: none; min-height: 52px;
+            font-family: 'Open Sans', sans-serif;
+        }
+        .notes-input:focus { outline: none; border-color: var(--primary); }
+
+        /* ── SIGNATURE ── */
+        .sig-section { padding: 14px 32px 28px 32px; }
+        .sig-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 28px;
+            margin-top: 4px;
+        }
+        .sig-block { display: flex; flex-direction: column; gap: 5px; }
+        .sig-role {
+            font-size: 8.5px; font-weight: 800;
+            text-transform: uppercase; letter-spacing: 0.8px;
+            color: var(--primary);
+        }
+        .sig-line { border-bottom: 1.5px solid var(--primary); height: 38px; }
+        .sig-meta {
+            display: grid; grid-template-columns: 2fr 1fr; gap: 12px;
+        }
+        .sig-meta-label {
+            font-size: 8px; color: #999; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.5px;
+            padding-top: 3px;
+        }
+
+        /* ── FOOTER ── */
+        .inv-footer {
+            background: var(--primary);
+            padding: 10px 32px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .inv-footer-left  { font-size: 8.5px; color: rgba(255,255,255,0.55); letter-spacing: 0.5px; }
+        .inv-footer-right { font-size: 8.5px; color: var(--accent); font-weight: 700; letter-spacing: 0.5px; }
+
+        /* ── GLOW INPUTS (on-screen only) ── */
+        .info-input:focus,
+        .notes-input:focus {
+            border-bottom-color: #6aabdf;
+            box-shadow:
+                inset 0 1px 3px rgba(20,50,90,0.07),
+                0 0 0 2.5px rgba(59,130,246,0.18),
+                0 0 8px rgba(59,130,246,0.1);
+        }
+
+        /* ── Refinity badge ── */
+        .refinity-badge {
+            display: inline-block;
+            background: #27AE60;
+            color: #fff;
+            font-size: 7.5px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            padding: 1px 5px;
+            border-radius: 3px;
+            margin-left: 4px;
+            vertical-align: middle;
+            text-transform: uppercase;
+        }
+
+        /* ══════════════════════════════════════
+           PRINT
+        ══════════════════════════════════════ */
+        @page { size: letter; margin: 0.35in 0.4in; }
+        @media print {
+            body { background: white; font-size: 11px; }
+            .sidebar, .content-wrap > *:not(.ws-card) { display: none !important; }
+            .main-layout { display: block; }
+            .content-wrap { padding: 0; background: white; }
+            .ws-card { box-shadow: none; max-width: 100%; }
+            .info-input, .notes-input {
+                border: none !important;
+                box-shadow: none !important;
+                background: transparent !important;
+            }
+            .mat-table { font-size: 10.5px; }
+            .mat-table td, .mat-table thead th { padding: 5px 8px; }
+            .mat-table tbody tr.disabled { display: none; }
+            /* Hide markup/adjustment on print */
+            .adj-row { display: none !important; }
+            /* Hide unit price input column on print */
+            .col-unit-price { display: none !important; }
+            /* Hide unit label inputs on print */
+            .unit-label-input { display: none !important; }
+            /* Hide VIN status and checkboxes on print */
+            #vinStatus { display: none !important; }
+            .td-cb { display: none !important; }
+            .mat-table thead th:first-child { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="toast"></div>
+
+<div class="main-layout">
+
+    <!-- ══════════════════════════════════════
+         SIDEBAR
+    ══════════════════════════════════════ -->
+    <div class="sidebar">
+        <div class="sidebar-inner">
+
+            <!-- Mode Toggle -->
+            <h6>Calculation Mode</h6>
+            <div class="mode-toggle-wrap">
+                <button class="mode-btn active-markup" id="btnMarkUp"   onclick="setMode('up')">&#9650; Mark Up</button>
+                <button class="mode-btn"               id="btnMarkDown" onclick="setMode('down')">&#9660; Mark Down</button>
+            </div>
+
+            <!-- Inputs -->
+            <h6>Parameters</h6>
+            <div class="sb-field">
+                <label class="sb-label">Refinish Hours Sold</label>
+                <input class="sb-input" type="number" id="sbHours" placeholder="e.g. 9.9" step="any" min="0" oninput="recalcAll()">
+            </div>
+            <div class="sb-field">
+                <label class="sb-label">Labor Rate / Hr ($)</label>
+                <input class="sb-input" type="number" id="sbRate" placeholder="e.g. 50.00" step="0.01" min="0" value="50.00" oninput="recalcAll()">
+            </div>
+            <div class="sb-field">
+                <span id="modeLabelText">Mark Up %</span>
+                <input class="sb-input" type="number" id="sbPct" placeholder="e.g. 65" step="0.1" min="0" value="65" oninput="recalcAll()">
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="sidebar-actions">
+                <button class="btn btn-save"  onclick="saveRecord()">&#128190; Save Record</button>
+                <button class="btn btn-print" onclick="window.print()">&#128438; Print / Save PDF</button>
+                <button class="btn btn-clear" onclick="clearForm()">&#10006; Clear Form</button>
+            </div>
+
+            <!-- Refinity Import -->
+            <h6>Refinity Import</h6>
+            <div class="sb-field">
+                <label class="sb-label">RO # to Import</label>
+                <input class="sb-input" type="text" id="refinityRO" placeholder="e.g. 12646">
+            </div>
+            <div class="sidebar-actions">
+                <label class="btn btn-import" style="text-align:center;cursor:pointer;display:block;padding:9px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;border-radius:4px;">
+                    &#128196; Import Refinity CSV
+                    <input type="file" id="refinityFile" accept=".csv" style="display:none;" onchange="importRefinity()">
+                </label>
+            </div>
+            <div id="refinityStatus" style="font-size:9px;color:#7f9ab0;letter-spacing:0.4px;margin-top:-6px;margin-bottom:10px;min-height:16px;line-height:1.5;"></div>
+
+            <!-- Saved Records -->
+            <h6>Saved Records</h6>
+            <input class="search-box" type="text" id="searchBox" placeholder="Search RO# or Customer..." oninput="renderRecords()">
+            <div class="record-count" id="recordCount">0 records</div>
+            <div id="recordList"></div>
+
+        </div>
+        <div class="sidebar-footer">
+            <button onclick="exportAll()">&#8681; Export CSV</button>
+            <button onclick="clearAllRecords()">&#128465; Clear All</button>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         CONTENT
+    ══════════════════════════════════════ -->
+    <div class="content-wrap">
+    <div class="ws-card" id="capture-area">
+
+        <!-- INVOICE HEADER -->
+        <div class="invoice-header">
+            <div class="logo-area">
+                <img src="../VEHICLE DELIVERY RECEIPT/horizontal-logo vibrant.png" alt="3J's Auto Body">
+                <div class="tagline">"Meeting Great People by Accident Since 1991"</div>
+                <div class="addr-block">
+                    1855 E. 29th Street &nbsp;|&nbsp; Signal Hill, CA 90755<br>
+                    Office: 562.424.6744 &nbsp;|&nbsp; threejsauto@verizon.net
+                </div>
+            </div>
+            <div class="title-area">
+                <div class="inv-title">Paint &amp; Material</div>
+                <div class="inv-subtitle">Material Cap Calculator &nbsp;|&nbsp; Allocation Invoice</div>
+                <div class="inv-number-row">
+                    <span class="inv-number-label">Invoice #</span>
+                    <span class="inv-number-val" id="displayInvNum">—</span>
+                </div>
+            </div>
+        </div>
+        <div class="gold-bar"></div>
+
+        <!-- INFO BLOCK -->
+        <div class="info-block">
+            <div class="info-field">
+                <label>RO #</label>
+                <input class="info-input" type="text" id="infoRO" placeholder="&nbsp;" oninput="syncInvNum(this.value)">
+            </div>
+            <div class="info-field">
+                <label>Date</label>
+                <input class="info-input" type="text" id="infoDate" placeholder="&nbsp;" readonly>
+            </div>
+            <div class="info-field">
+                <label>Claim #</label>
+                <input class="info-input" type="text" id="infoClaim" placeholder="&nbsp;">
+            </div>
+            <div class="info-field span2">
+                <label>Customer Name</label>
+                <input class="info-input" type="text" id="infoCustomer" placeholder="&nbsp;">
+            </div>
+            <div class="info-field">
+                <label>Insurance Company</label>
+                <input class="info-input" type="text" id="infoIns" placeholder="&nbsp;">
+            </div>
+            <div class="info-field span2">
+                <label>Year / Make / Model</label>
+                <input class="info-input" type="text" id="infoVehicle" placeholder="&nbsp;" style="text-transform:uppercase;">
+            </div>
+            <div class="info-field">
+                <label>VIN # <span id="vinStatus" style="font-size:7.5px;color:#27AE60;font-weight:700;letter-spacing:0.5px;text-transform:none;"></span></label>
+                <input class="info-input" type="text" id="infoVIN" placeholder="&nbsp;" style="text-transform:uppercase;" oninput="this.value=this.value.toUpperCase()" onblur="decodeVIN()">
+            </div>
+            <div class="info-field">
+                <label>Refinish Hours (from Estimate)</label>
+                <div style="display:flex;align-items:baseline;gap:5px;">
+                    <input class="info-input" type="number" id="infoHours" placeholder="&nbsp;" step="any" style="width:auto;flex:1;" oninput="syncFromInfo()">
+                    <span style="font-size:9px;font-weight:800;color:var(--primary);letter-spacing:0.8px;white-space:nowrap;">HRS.</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION BAR -->
+        <div class="section-bar">
+            <span class="section-bar-title">Material Allocation Breakdown</span>
+        </div>
+
+        <!-- TABLE -->
+        <div class="mat-table-wrap">
+        <table class="mat-table" id="matTable">
+            <thead>
+                <tr>
+                    <th style="width:30px;" class="center">&#10003;</th>
+                    <th>Line Item</th>
+                    <th class="right" style="width:80px;">Alloc %</th>
+                    <th class="right col-unit-price" style="width:90px;">Unit Price</th>
+                    <th class="right" style="width:60px;">Unit</th>
+                    <th class="right" style="width:70px;">Qty</th>
+                    <th class="right" style="width:100px;">Amount</th>
+                </tr>
+            </thead>
+            <tbody id="matBody">
+                <!-- rows injected by JS -->
+            </tbody>
+        </table>
+        </div>
+
+        <!-- TOTALS -->
+        <div class="totals-block">
+            <div class="total-row">
+                <span class="total-label">Subtotal</span>
+                <span class="total-val" id="totSubtotal">$0.00</span>
+            </div>
+            <div class="total-row adj-row">
+                <span class="total-label" id="adjLabel">Adjustment (0.0%)</span>
+                <span class="total-val" id="totAdj">$0.00</span>
+            </div>
+            <div class="total-row">
+                <span class="total-label">Invoice Total</span>
+                <span class="total-val" id="totInvoice">$0.00</span>
+            </div>
+            <div class="total-row">
+                <span class="total-label">RO Allowance</span>
+                <span class="total-val"><input class="info-input" type="number" id="roAllowance" placeholder="0.00" step="0.01" style="width:100px; text-align:right; font-size:12px; font-weight:800;" oninput="calcNetDue()"></span>
+            </div>
+            <div class="total-row net-due">
+                <span class="total-label">Net Payment Due</span>
+                <span class="total-val" id="totNet">$0.00</span>
+            </div>
+        </div>
+
+        <!-- NOTES -->
+        <div class="notes-wrap">
+            <div class="notes-label">Notes / Additional Comments</div>
+            <textarea class="notes-input" id="infoNotes" placeholder="Enter any supplemental notes here..."></textarea>
+        </div>
+
+        <!-- DISCLAIMER -->
+        <div class="disclaimer-block" style="padding: 10px 32px 14px 32px; border-top: 1px solid #e0e0e0;">
+            <div class="disc-label" style="font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #2C3E50; margin-bottom: 5px;">Disclaimer</div>
+            <div class="disc-text" style="font-size: 8.5px; font-weight: 500; color: #444; line-height: 1.7; letter-spacing: 0.2px;">
+                This invoice reflects charges for paint and related materials based on the actual acquisition cost to 3J's Auto Body and the documented quantities utilized in connection with the claim referenced herein. All materials billed are necessary to restore the vehicle to its pre-loss condition and have been applied in accordance with generally accepted industry standards, manufacturer specifications, and applicable warranty requirements. Pursuant to the principle of indemnification, and in accordance with California regulations governing fair claims settlement practices, these charges represent reasonable, necessary, and actual costs incurred and are not subject to unilateral or arbitrary reduction.
+            </div>
+        </div>
+
+        <!-- SIGNATURES -->
+        <div class="section-bar" style="margin-top:0;background:linear-gradient(90deg,var(--primary) 0%,#3d5368 100%);padding:6px 32px;">
+            <span class="section-bar-title" style="color:#F0C040;">Signatures</span>
+        </div>
+        <div class="sig-section">
+            <div style="margin-top: 4px;">
+                <div class="sig-role" style="margin-bottom: 6px;">Estimator / Preparer</div>
+                <div style="display:grid; grid-template-columns: 2fr 1fr; gap: 32px;">
+                    <div>
+                        <div class="sig-line"></div>
+                        <div class="sig-meta-label" style="padding-top:3px;">Print Name</div>
+                    </div>
+                    <div>
+                        <div class="sig-line"></div>
+                        <div class="sig-meta-label" style="padding-top:3px;">Date</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FOOTER -->
+        <div class="inv-footer">
+            <div class="inv-footer-left">3J's Auto Body &amp; Paint &nbsp;|&nbsp; 1855 E. 29th Street, Signal Hill, CA 90755 &nbsp;|&nbsp; 562.424.6744</div>
+            <div class="inv-footer-right">PAINT &amp; MATERIAL CAP INVOICE</div>
+        </div>
+
+    </div><!-- /ws-card -->
+    </div><!-- /content-wrap -->
+
+</div><!-- /main-layout -->
+
+<script>
+/* ══════════════════════════════════════════════════════════════
+   DATA — 23 line items with G allocation values
+   Formula: amount = hours * rate * G * 0.999 * (1 ± pct/100)
+   G values sum to exactly 1.000
+══════════════════════════════════════════════════════════════ */
+var LINE_ITEMS = [
+    // group, description, G, unitPrice, unit
+    { group: 'Prep & Surface Supplies', desc: 'Sand Paper / Abrasives',            g: 0.037, unitPrice: 8.00,  unit: 'pkg'   },
+    { group: 'Prep & Surface Supplies', desc: 'Masking / Trim Tape',               g: 0.018, unitPrice: 6.00,  unit: 'roll'  },
+    { group: 'Prep & Surface Supplies', desc: 'Masking Paper',                     g: 0.034, unitPrice: 12.00, unit: 'roll'  },
+    { group: 'Prep & Surface Supplies', desc: 'Cleaning Solutions',                g: 0.025, unitPrice: 25.00, unit: 'gal'   },
+    { group: 'Prep & Surface Supplies', desc: 'Clean Up Thinners',                 g: 0.034, unitPrice: 22.00, unit: 'gal'   },
+    { group: 'Prep & Surface Supplies', desc: 'Masks / Gloves / Safety',           g: 0.009, unitPrice: 15.00, unit: 'pkg'   },
+    { group: 'Prep & Surface Supplies', desc: 'Misc. Allied Supplies',             g: 0.012, unitPrice: 10.00, unit: 'each'  },
+    { group: 'Prep & Surface Supplies', desc: 'Body Filler / Glaze',               g: 0.027, unitPrice: 35.00, unit: 'gal'   },
+    { group: 'Prep & Surface Supplies', desc: 'Spray-Out Panels',                  g: 0.013, unitPrice: 3.00,  unit: 'each'  },
+    { group: 'Paint Products',          desc: 'Primers / Sealers',                 g: 0.075, unitPrice: 65.00, unit: 'gal'   },
+    { group: 'Paint Products',          desc: 'Hardeners / Catalysts / Reducers',  g: 0.192, unitPrice: 30.00, unit: 'qt'    },
+    { group: 'Paint Products',          desc: 'Basecoat',                          g: 0.162, unitPrice: 45.00, unit: 'pt'    },
+    { group: 'Paint Products',          desc: 'Clearcoat',                         g: 0.232, unitPrice: 75.00, unit: 'gal'   },
+    { group: 'Paint Products',          desc: 'Mixing Cups',                       g: 0.032, unitPrice: 12.00, unit: 'pkg'   },
+    { group: 'Paint Products',          desc: 'Degreaser / Prep Materials',        g: 0.042, unitPrice: 20.00, unit: 'gal'   },
+    { group: 'Detail & Polish',         desc: 'Buff Compound',                     g: 0.009, unitPrice: 18.00, unit: 'qt'    },
+    { group: 'Detail & Polish',         desc: 'Polish Compound',                   g: 0.006, unitPrice: 16.00, unit: 'qt'    },
+    { group: 'Detail & Polish',         desc: 'Final Glaze',                       g: 0.005, unitPrice: 20.00, unit: 'qt'    },
+    { group: 'Detail & Polish',         desc: 'Buffing Pads',                      g: 0.006, unitPrice: 8.00,  unit: 'each'  },
+    { group: 'Detail & Polish',         desc: 'Polish Pads',                       g: 0.006, unitPrice: 6.00,  unit: 'each'  },
+    { group: 'Detail & Polish',         desc: 'Clean Up / Polish Cloths',          g: 0.007, unitPrice: 12.00, unit: 'pkg'   },
+    { group: 'Detail & Polish',         desc: 'Colorsand Paper',                   g: 0.004, unitPrice: 2.50,  unit: 'sheet' },
+    { group: 'Detail & Polish',         desc: 'Misc. Clean Up Supplies',           g: 0.013, unitPrice: 8.00,  unit: 'pkg'   }
+];
+
+var currentMode = 'up';
+var RECORDS_KEY = 'mat_cap_records';
+var UNIT_KEY    = 'mat_cap_unit_prices';
+
+function getSavedUnitPrices() {
+    try { return JSON.parse(localStorage.getItem(UNIT_KEY) || '{}'); } catch(e) { return {}; }
+}
+function saveUnitPrices() {
+    var obj = {};
+    LINE_ITEMS.forEach(function(item, i) {
+        var upEl = document.getElementById('up_' + i);
+        var ulEl = document.getElementById('ul_' + i);
+        if (upEl) obj['up_' + i] = upEl.value;
+        if (ulEl) obj['ul_' + i] = ulEl.value;
+    });
+    localStorage.setItem(UNIT_KEY, JSON.stringify(obj));
+}
+
+/* ── Build table rows on load ── */
+function buildTable() {
+    var tbody      = document.getElementById('matBody');
+    var lastGroup  = '';
+    var savedPrices = getSavedUnitPrices();
+
+    LINE_ITEMS.forEach(function(item, i) {
+        if (item.group !== lastGroup) {
+            lastGroup = item.group;
+            var gtr = document.createElement('tr');
+            gtr.className = 'group-header';
+            gtr.innerHTML = '<td colspan="7">' + item.group + '</td>';
+            tbody.appendChild(gtr);
+        }
+        var upVal = savedPrices['up_' + i] !== undefined ? savedPrices['up_' + i] : item.unitPrice;
+        var ulVal = savedPrices['ul_' + i] !== undefined ? savedPrices['ul_' + i] : item.unit;
+
+        var tr = document.createElement('tr');
+        tr.setAttribute('data-idx', i);
+        tr.innerHTML =
+            '<td class="td-cb center"><input type="checkbox" checked onchange="toggleRow(this,' + i + ')"></td>' +
+            '<td id="desc_' + i + '">' + item.desc + '</td>' +
+            '<td class="right td-g">' + (item.g * 100).toFixed(1) + '%</td>' +
+            '<td class="right col-unit-price" style="white-space:nowrap;"><span style="font-size:10px;font-weight:600;color:#555;">$</span><input type="number" class="unit-price-input" id="up_' + i + '" value="' + parseFloat(upVal).toFixed(2) + '" step="0.01" min="0" style="width:68px;text-align:right;border:1px solid #ddd;border-radius:3px;padding:2px 4px;font-size:10px;" oninput="saveUnitPrices();updateQty(' + i + ')" onblur="this.value=parseFloat(this.value||0).toFixed(2);saveUnitPrices();updateQty(' + i + ')"></td>' +
+            '<td class="right"><input type="text" class="unit-label-input" id="ul_' + i + '" value="' + ulVal + '" style="width:44px;text-align:center;border:1px solid #ddd;border-radius:3px;padding:2px 4px;font-size:10px;" oninput="saveUnitPrices();updateQty(' + i + ')"></td>' +
+            '<td class="right" id="qty_' + i + '" style="font-size:10px;font-weight:700;color:#2C3E50;">—</td>' +
+            '<td class="right td-amt" id="amt_' + i + '">$0.00</td>';
+        tbody.appendChild(tr);
+    });
+}
+
+/* ── Toggle row enabled/disabled ── */
+function toggleRow(cb, i) {
+    var tr = cb.closest('tr');
+    if (cb.checked) {
+        tr.classList.remove('disabled');
+    } else {
+        tr.classList.add('disabled');
+        document.getElementById('amt_' + i).textContent = '$0.00';
+        document.getElementById('qty_' + i).textContent = '—';
+    }
+    recalcAll();
+}
+
+/* ── Set mode ── */
+function setMode(mode) {
+    currentMode = mode;
+    document.getElementById('btnMarkUp').className   = 'mode-btn' + (mode === 'up'   ? ' active-markup'   : '');
+    document.getElementById('btnMarkDown').className = 'mode-btn' + (mode === 'down' ? ' active-markdown' : '');
+    document.getElementById('modeLabelText').textContent = mode === 'up' ? 'Mark Up %' : 'Mark Down %';
+    recalcAll();
+}
+
+/* ── Sync sidebar hours → info hours input ── */
+function syncFromInfo() {
+    var v = document.getElementById('infoHours').value;
+    document.getElementById('sbHours').value = v;
+    recalcAll();
+}
+
+/* ── Main recalc ── */
+function recalcAll() {
+    var hours = parseFloat(document.getElementById('sbHours').value) || 0;
+    var rate  = parseFloat(document.getElementById('sbRate').value)  || 0;
+    var pct   = parseFloat(document.getElementById('sbPct').value)   || 0;
+
+    if (hours > 0) document.getElementById('infoHours').value = hours;
+
+    var sign = currentMode === 'up' ? '+' : '-';
+    document.getElementById('adjLabel').textContent = 'Adjustment (' + sign + pct.toFixed(1) + '%)';
+
+    var subtotal = 0;
+    LINE_ITEMS.forEach(function(item, i) {
+        var tr = document.querySelector('tr[data-idx="' + i + '"]');
+        var cb = tr ? tr.querySelector('input[type=checkbox]') : null;
+        if (cb && cb.checked) {
+            var multiplier = currentMode === 'up'
+                ? (1 + pct / 100)
+                : (1 - pct / 100);
+            var amt = hours * rate * item.g * 0.999 * multiplier;
+            document.getElementById('amt_' + i).textContent = '$' + amt.toFixed(2);
+            subtotal += amt;
+        }
+    });
+
+    var base   = hours * rate * 0.999;
+    var adjAmt = currentMode === 'up' ? subtotal - base : base - subtotal;
+
+    document.getElementById('totSubtotal').textContent = '$' + subtotal.toFixed(2);
+    document.getElementById('totAdj').textContent      = (pct !== 0 ? (currentMode === 'up' ? '+' : '-') : '') + '$' + Math.abs(adjAmt).toFixed(2);
+    document.getElementById('totInvoice').textContent  = '$' + subtotal.toFixed(2);
+    calcNetDue();
+    updateAllQty();
+}
+
+function calcNetDue() {
+    var invoice  = parseFloat(document.getElementById('totInvoice').textContent.replace(/[^0-9.]/g, '')) || 0;
+    var allowance = parseFloat(document.getElementById('roAllowance').value) || 0;
+    document.getElementById('totNet').textContent = '$' + (invoice - allowance).toFixed(2);
+}
+
+/* ── Qty auto-calc: amount ÷ unit price ── */
+function updateQty(i) {
+    var amtText   = document.getElementById('amt_' + i).textContent.replace(/[^0-9.]/g, '');
+    var amt       = parseFloat(amtText) || 0;
+    var unitPrice = parseFloat(document.getElementById('up_' + i).value) || 0;
+    var unit      = (document.getElementById('ul_' + i).value.trim() || '');
+    var qtyEl     = document.getElementById('qty_' + i);
+    if (unitPrice > 0 && amt > 0) {
+        var qty = amt / unitPrice;
+        qtyEl.textContent = qty.toFixed(2) + (unit ? ' ' + unit : '');
+    } else {
+        qtyEl.textContent = '—';
+    }
+}
+
+function updateAllQty() {
+    LINE_ITEMS.forEach(function(item, i) { updateQty(i); });
+}
+
+/* ── RO# → Invoice# ── */
+function syncInvNum(ro) {
+    document.getElementById('displayInvNum').textContent = ro ? ro + '-MAT' : '—';
+}
+
+/* ── flatpickr date ── */
+flatpickr('#infoDate', {
+    dateFormat: 'F j, Y',
+    defaultDate: new Date(),
+    allowInput: false
+});
+
+/* ══════════════════════════════════════════════════════════════
+   RECORDS — localStorage CRUD
+══════════════════════════════════════════════════════════════ */
+function getRecords() {
+    try { return JSON.parse(localStorage.getItem(RECORDS_KEY) || '[]'); } catch(e) { return []; }
+}
+function setRecords(arr) {
+    localStorage.setItem(RECORDS_KEY, JSON.stringify(arr));
+}
+
+function saveRecord() {
+    var ro   = document.getElementById('infoRO').value.trim();
+    if (!ro) { showToast('Enter an RO# before saving.'); return; }
+
+    var rec = {
+        id:           Date.now(),
+        ro:           ro,
+        customer:     document.getElementById('infoCustomer').value.trim(),
+        date:         document.getElementById('infoDate').value.trim(),
+        hours:        document.getElementById('sbHours').value,
+        rate:         document.getElementById('sbRate').value,
+        pct:          document.getElementById('sbPct').value,
+        mode:         currentMode,
+        vehicle:      document.getElementById('infoVehicle').value.trim(),
+        ins:          document.getElementById('infoIns').value.trim(),
+        claim:        document.getElementById('infoClaim').value.trim(),
+        vin:          document.getElementById('infoVIN').value.trim(),
+        allowance:    document.getElementById('roAllowance').value,
+        notes:        document.getElementById('infoNotes').value.trim(),
+        invoiceTotal: document.getElementById('totInvoice').textContent,
+        netDue:       document.getElementById('totNet').textContent
+    };
+
+    var arr = getRecords();
+    arr.unshift(rec);
+    setRecords(arr);
+    renderRecords();
+    showToast('Record saved — RO# ' + ro);
+}
+
+function loadRecord(id) {
+    var rec = getRecords().find(function(r){ return r.id === id; });
+    if (!rec) return;
+    document.getElementById('infoRO').value       = rec.ro       || '';
+    document.getElementById('infoCustomer').value = rec.customer || '';
+    document.getElementById('infoDate').value     = rec.date     || '';
+    document.getElementById('sbHours').value      = rec.hours    || '';
+    document.getElementById('sbRate').value       = rec.rate     || '';
+    document.getElementById('sbPct').value        = rec.pct      || '0';
+    document.getElementById('infoVehicle').value  = rec.vehicle  || '';
+    document.getElementById('infoIns').value      = rec.ins      || '';
+    document.getElementById('infoClaim').value    = rec.claim    || '';
+    document.getElementById('infoVIN').value      = rec.vin      || '';
+    document.getElementById('roAllowance').value  = rec.allowance|| '';
+    document.getElementById('infoNotes').value    = rec.notes    || '';
+    document.getElementById('infoHours').value    = rec.hours    || '';
+    syncInvNum(rec.ro);
+    setMode(rec.mode || 'up');
+    recalcAll();
+}
+
+function deleteRecord(id, e) {
+    e.stopPropagation();
+    setRecords(getRecords().filter(function(r){ return r.id !== id; }));
+    renderRecords();
+    showToast('Record deleted.');
+}
+
+function renderRecords() {
+    var arr = getRecords();
+    var q   = (document.getElementById('searchBox').value || '').toLowerCase();
+    if (q) arr = arr.filter(function(r){
+        return (r.ro || '').toLowerCase().includes(q) || (r.customer || '').toLowerCase().includes(q);
+    });
+    document.getElementById('recordCount').textContent = arr.length + ' record' + (arr.length !== 1 ? 's' : '');
+    document.getElementById('recordList').innerHTML = arr.map(function(r){
+        return '<div class="history-item" onclick="loadRecord(' + r.id + ')">' +
+            '<div class="rec-ro">RO# ' + (r.ro || '—') + '</div>' +
+            '<div class="rec-name">' + (r.customer || 'No name') + '</div>' +
+            '<div class="rec-date">' + (r.date || '') + ' &nbsp;|&nbsp; ' + (r.invoiceTotal || '$0.00') + '</div>' +
+            '<button class="del-btn" onclick="deleteRecord(' + r.id + ',event)">Del</button>' +
+            '</div>';
+    }).join('');
+}
+
+function exportAll() {
+    var arr = getRecords();
+    if (!arr.length) { showToast('No records to export.'); return; }
+    var headers = ['RO#','Customer','Date','Vehicle','Insurance','Claim#','VIN','Hours','Rate','Mode','Markup%','Allowance','Invoice Total','Net Due','Notes'];
+    var rows = arr.map(function(r){
+        return [r.ro,r.customer,r.date,r.vehicle,r.ins,r.claim,r.vin,r.hours,r.rate,r.mode,r.pct,r.allowance,r.invoiceTotal,r.netDue,r.notes]
+            .map(function(v){ return '"' + (v||'').toString().replace(/"/g,'""') + '"'; }).join(',');
+    });
+    var csv  = [headers.join(',')].concat(rows).join('\n');
+    var blob = new Blob([csv], {type:'text/csv'});
+    var a    = document.createElement('a');
+    a.href   = URL.createObjectURL(blob);
+    a.download = '3js_mat_cap_records.csv';
+    a.click();
+}
+
+function clearAllRecords() {
+    if (!confirm('Delete ALL saved records? This cannot be undone.')) return;
+    setRecords([]);
+    renderRecords();
+    showToast('All records cleared.');
+}
+
+function clearForm() {
+    ['infoRO','infoCustomer','infoClaim','infoIns','infoVehicle','infoVIN','infoNotes','roAllowance'].forEach(function(id){
+        document.getElementById(id).value = '';
+    });
+    document.getElementById('sbHours').value  = '';
+    document.getElementById('sbPct').value    = '0';
+    document.getElementById('infoHours').value = '';
+    syncInvNum('');
+    setMode('up');
+    recalcAll();
+    // Clear any Refinity badges
+    LINE_ITEMS.forEach(function(item, i) {
+        var descEl = document.getElementById('desc_' + i);
+        if (descEl) descEl.innerHTML = item.desc;
+    });
+    document.getElementById('refinityStatus').textContent = '';
+    document.getElementById('refinityRO').value = '';
+    showToast('Form cleared.');
+}
+
+function showToast(msg) {
+    var t = document.getElementById('toast');
+    t.textContent = msg;
+    t.style.display = 'block';
+    setTimeout(function(){ t.style.display = 'none'; }, 2800);
+}
+
+/* ══════════════════════════════════════════════════════════════
+   REFINITY IMPORT
+   Reads JobCostDetails CSV exported from BASF Refinity.
+   Maps products to line item indices by keyword matching.
+   Updates Qty cells with actual measured ounces from scale.
+   Does NOT change any dollar calculations.
+══════════════════════════════════════════════════════════════ */
+function importRefinity() {
+    var file   = document.getElementById('refinityFile').files[0];
+    var roNum  = document.getElementById('refinityRO').value.trim();
+    var status = document.getElementById('refinityStatus');
+
+    if (!file) return;
+    if (!roNum) { status.textContent = '⚠ Enter an RO# above first.'; return; }
+
+    var reader = new FileReader();
+    reader.onload = function(e) {
+        var lines = e.target.result.split('\n').map(function(l){ return l.trim(); }).filter(Boolean);
+        if (lines.length < 2) { status.textContent = '⚠ File appears empty.'; return; }
+
+        // Parse header
+        var headers = lines[0].split(',').map(function(h){ return h.replace(/"/g,'').trim(); });
+        var col = function(name) { return headers.indexOf(name); };
+
+        var iRO      = col('Ro Number');
+        var iName    = col('Color Name');
+        var iCode    = col('Color Code');
+        var iAmt     = col('Amount');
+        var iUnit    = col('Unit');
+        var iCost    = col('Cost');
+
+        // Filter rows for this RO
+        var rows = [];
+        for (var i = 1; i < lines.length; i++) {
+            var cells = lines[i].split(',').map(function(c){ return c.replace(/"/g,'').trim(); });
+            if (cells[iRO] && cells[iRO].toString() === roNum.toString()) {
+                rows.push(cells);
+            }
+        }
+
+        if (!rows.length) {
+            status.textContent = '⚠ No data found for RO# ' + roNum + '. Check the number and try again.';
+            return;
+        }
+
+        // Accumulate oz & cost per category
+        // Indices: 9=Primers/Sealers, 10=Hardeners/Catalysts/Reducers, 11=Basecoat, 12=Clearcoat
+        var cats = { 9: {oz:0,cost:0}, 10: {oz:0,cost:0}, 11: {oz:0,cost:0}, 12: {oz:0,cost:0} };
+
+        rows.forEach(function(cells) {
+            var name = (cells[iName] || '').toLowerCase();
+            var code = (cells[iCode] || '').trim();
+            var oz   = parseFloat(cells[iAmt]) || 0;
+            var cost = parseFloat(cells[iCost]) || 0;
+            // Convert to oz if unit is not OUNCE
+            var unit = (cells[iUnit] || '').toUpperCase();
+            if (unit === 'GRAM') oz = oz * 0.035274;
+
+            var idx;
+            if (name.indexOf('clear') !== -1) {
+                idx = 12; // Clearcoat
+            } else if (name.indexOf('sealer') !== -1 || name.indexOf('primer') !== -1) {
+                idx = 9;  // Primers / Sealers
+            } else if (name.indexOf('reducer') !== -1 || name.indexOf('hardener') !== -1 || name.indexOf('catalyst') !== -1) {
+                idx = 10; // Hardeners / Catalysts / Reducers
+            } else if (code && code.length > 0) {
+                idx = 11; // Has a color code = Basecoat / Toner
+            } else {
+                idx = 10; // Default to hardeners/reducers bucket
+            }
+
+            cats[idx].oz   += oz;
+            cats[idx].cost += cost;
+        });
+
+        // Update qty cells with actual measured amounts
+        // Display in oz. Update unit label to 'oz' for Refinity rows.
+        var updated = 0;
+        Object.keys(cats).forEach(function(idxStr) {
+            var idx = parseInt(idxStr);
+            var data = cats[idx];
+            if (data.oz <= 0) return;
+
+            var qtyEl  = document.getElementById('qty_' + idx);
+            var ulEl   = document.getElementById('ul_' + idx);
+            var descEl = document.getElementById('desc_' + idx);
+
+            if (qtyEl) {
+                // Display in oz (scale-measured)
+                qtyEl.textContent = data.oz.toFixed(2) + ' oz';
+                qtyEl.style.color = '#27AE60';
+            }
+            if (ulEl) ulEl.value = 'oz';
+
+            // Add Refinity badge to description
+            if (descEl && descEl.querySelector('.refinery-badge') === null) {
+                descEl.innerHTML = LINE_ITEMS[idx].desc + ' <span class="refinity-badge">Refinity</span>';
+            }
+
+            updated++;
+        });
+
+        // Also auto-fill RO# on the form if blank
+        var roField = document.getElementById('infoRO');
+        if (!roField.value.trim()) {
+            roField.value = roNum;
+            syncInvNum(roNum);
+        }
+
+        saveUnitPrices();
+        status.style.color = '#2ecc71';
+        status.textContent = '✓ Imported RO# ' + roNum + ' — ' + rows.length + ' mix(es), ' + updated + ' line item(s) updated with scale data.';
+
+        // Reset file input for re-use
+        document.getElementById('refinityFile').value = '';
+    };
+
+    reader.onerror = function() { status.textContent = '⚠ Could not read file.'; };
+    reader.readAsText(file);
+}
+
+/* ── VIN Decoder (NHTSA API) ── */
+function decodeVIN() {
+    var vin = document.getElementById('infoVIN').value.trim().toUpperCase();
+    var status = document.getElementById('vinStatus');
+    if (vin.length !== 17) return;
+    status.textContent = 'Decoding...';
+    status.style.color = '#7f9ab0';
+    fetch('https://vpic.nhtsa.dot.gov/api/vehicles/decodevinvalues/' + vin + '?format=json')
+        .then(function(r){ return r.json(); })
+        .then(function(data) {
+            var res   = data.Results && data.Results[0];
+            var year  = (res.ModelYear  || '').trim();
+            var make  = (res.Make       || '').trim().toUpperCase();
+            var model = (res.Model      || '').trim().toUpperCase();
+            if (year && make && model) {
+                document.getElementById('infoVehicle').value = year + ' ' + make + ' ' + model;
+                status.textContent = '✓ Decoded';
+                status.style.color = '#27AE60';
+            } else {
+                status.textContent = '⚠ Not found';
+                status.style.color = '#e74c3c';
+            }
+        })
+        .catch(function() {
+            status.textContent = '⚠ Error';
+            status.style.color = '#e74c3c';
+        });
+}
+
+/* ── Sidebar click sound ── */
+var _clickAudio = new Audio('../DESIGN REFERENCE IMAGES/smooth_mouse button_click sound.mp3');
+_clickAudio.volume = 0.5;
+document.querySelector('.sidebar').addEventListener('click', function(e) {
+    var el = e.target;
+    if (el.closest('button') || el.closest('label') || el.tagName === 'INPUT' || el.tagName === 'SELECT') {
+        var s = _clickAudio.cloneNode();
+        s.volume = 0.5;
+        s.play().catch(function(){});
+    }
+});
+
+/* ── Enter key advances to next field ── */
+document.addEventListener('keydown', function(e) {
+    if (e.key !== 'Enter') return;
+    var focusable = Array.from(document.querySelectorAll(
+        'input:not([type=checkbox]):not([type=file]), select, textarea'
+    )).filter(function(el) {
+        return !el.disabled && !el.readOnly && el.offsetParent !== null;
+    });
+    var idx = focusable.indexOf(document.activeElement);
+    if (idx > -1 && idx < focusable.length - 1) {
+        e.preventDefault();
+        focusable[idx + 1].focus();
+    }
+});
+
+/* ── Init ── */
+buildTable();
+renderRecords();
+</script>
+</body>
+</html>
