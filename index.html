@@ -1447,23 +1447,23 @@
             netDue:       document.getElementById('totNet').textContent
         };
 
-        // Save to localStorage
+        // Save to localStorage — overwrite by RO#, no duplicates
         var arr = getRecords();
-        arr.unshift(rec);
+        var idx = arr.findIndex(function(r) { return r.ro === ro; });
+        if (idx > -1) { arr[idx] = rec; } else { arr.unshift(rec); }
         setRecords(arr);
         renderRecords();
 
-        // Save to Google Sheets
+        // Save to Google Sheets — sync all records
         fetch(SHEETS_URL, {
             method: 'POST',
-            body: JSON.stringify(rec)
+            body: JSON.stringify({ formType: 'material-cap', action: 'save', records: getRecords() })
         }).then(function(res) { return res.json(); })
           .then(function(data) {
-              if (data.status === 'ok') {
-                  showToast('Record saved — RO# ' + ro);
+              if (data.ok) {
                   if (callback) callback(true);
               } else {
-                  showToast('Saved locally. Sheets error: ' + data.message);
+                  showToast('Saved locally. Sheets error: ' + (data.error || ''));
                   if (callback) callback(true);
               }
           }).catch(function() {
