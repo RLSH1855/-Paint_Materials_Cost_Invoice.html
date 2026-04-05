@@ -1375,7 +1375,7 @@
         document.getElementById('confirmMsg').textContent = msg;
         document.getElementById('confirmSub').textContent = sub || '';
         circle.className    = 'confirm-circle ' + (success ? 'success' : 'error');
-        circle.textContent  = success ? '✓' : '✕';
+        circle.textContent  = success ? '\u2713' : '\u2715';
         overlay.classList.add('show');
         clearTimeout(overlay._t);
         overlay._t = setTimeout(function() { overlay.classList.remove('show'); }, 2800);
@@ -1394,7 +1394,7 @@
                 showConfirm(true, 'Saved Successfully', 'Record saved to Google Sheets');
             } else {
                 setCloud('error', 'Save Failed');
-                showConfirm(false, 'Save Failed', 'Saved locally — Sheets unreachable');
+                showConfirm(false, 'Save Failed', 'Saved locally - Sheets unreachable');
             }
         });
     }
